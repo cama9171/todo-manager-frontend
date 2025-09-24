@@ -1,35 +1,41 @@
-import { use, useState, useContext } from "react";
+import { useState, useContext } from "react";
 import imagePassword from "../assets/password.png";
 import imageUser from "../assets/person.png";
-import AuthContext from "../context/AuthProvider";
+import { Link, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 import api from "../api/axios";
-const LOGIN_URL = "/auth";
 
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [success, setSuccess] = useState(false);
 
-  const { setAuth } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  const submitLoginData = (e) => {
+  const submitLoginData = async (e) => {
     e.preventDefault();
-
     try {
-      const response = api.post("/api/login", { username, password });
-      console.log(JSON.stringify(response));
+      const response = await api.post("/api/login", { username, password });
+
+      console.log(JSON.stringify(response?.data));
       console.log(username, password);
+
       setUsername("");
       setPassword("");
-      setSuccess(true);
-    } catch (error) {}
+      login(username);
+      navigate("/dashboard");
+    } catch (error) {
+      if (!error?.response) {
+        setMessage("No Server Response");
+      } else {
+        setMessage("Login failed. Incorrect Username or Password!");
+      }
+    }
   };
 
-  return success ? (
-    <div className="message">Login successfully!</div>
-  ) : (
+  return (
     <div className="container">
       <div className="header">
         <div className="text">Login</div>
@@ -63,7 +69,11 @@ function Login() {
         <div className="submit" onClick={submitLoginData}>
           Login
         </div>
+        <div className="login-existing-account">
+          New to To-Do Manager? <Link to="/register">Register here</Link>
+        </div>
       </div>
+      {message && <div className="message">{message}</div>}
     </div>
   );
 }
